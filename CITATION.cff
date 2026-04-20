@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this dataset, please cite it using the metadata in this file."
+title: "Neuroengineering Dataset - Human Movement"
+type: data
+authors:
+  - family-names: "Apodaca"
+    given-names: "Guillermo"
+    affiliation: "Universidad Catolica \"Nuestra Senora de la Asuncion\""
+  - family-names: "Barboza"
+    given-names: "Juan"
+    affiliation: "Universidad Catolica \"Nuestra Senora de la Asuncion\""
+  - family-names: "Brunetti"
+    given-names: "Fernando"
+    affiliation: "Universidad Catolica \"Nuestra Senora de la Asuncion\""
+version: 1.0.0
+date-released: 2026-04-14
+license: "CC-BY-4.0"
+url: "https://github.com/neuroingenieria-uc/database-neuroingenieriauc"
+abstract: "IMU-based recordings of human movement during gait and stair-negotiation tasks."
+keywords:
+  - "IMU"
+  - "human movement"
+  - "gait"
+  - "stair ascent"
+  - "stair descent"

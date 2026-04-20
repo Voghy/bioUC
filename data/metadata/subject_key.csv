@@ -1,0 +1,15 @@
+subject_id,subject_initials,gait,stair_ascent,stair_descent
+S01,AP,1,0,0
+S02,CT,1,1,1
+S03,EA,1,0,0
+S04,EG,1,0,0
+S05,GA,1,1,1
+S06,IG,1,1,1
+S07,JB,1,1,1
+S08,LA,1,1,1
+S09,OI,1,1,1
+S10,TR,1,0,0
+S11,EZ,0,1,1
+S12,FM,0,1,1
+S13,MF,0,1,1
+S14,SS,0,1,1

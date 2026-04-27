@@ -43,8 +43,8 @@ void contar_metadatos(const char carpeta[], RegistroCSV registros[], int total);
 //funcion que lee los datos
 void leer_campos(const char carpeta[], RegistroCSV registros[], int total);
 //funciones  a implementar
-//void leer_valores(const char carpeta[], RegistroCSV registros[], int total);
-//void imprimir_metadatos(const RegistroCSV registros[], int total);
+void leer_valores(const char carpeta[], RegistroCSV registros[], int total);
+void imprimir_metadatos(const RegistroCSV registros[], int total);
 
 // Funciones de soporte
 void unir_ruta(char destino[], const char carpeta[], const char fichero[]);
@@ -67,8 +67,8 @@ int main(int argc, char *argv[]) {
 
     contar_metadatos(carpeta, registros, total);
     leer_campos(carpeta, registros, total);
-    //leer_valores(carpeta, registros, total);
-    //imprimir_metadatos(registros, total);
+    leer_valores(carpeta, registros, total);
+    imprimir_metadatos(registros, total);
 
     return 0;
 }
@@ -81,6 +81,7 @@ int main(int argc, char *argv[]) {
 int cargar_carpeta(const char carpeta[], RegistroCSV registros[]) {
     int total = 0;
 
+#ifdef _WIN32
     char patron[MAX_RUTA];
     struct _finddata_t datos;
     intptr_t busqueda;
@@ -101,6 +102,29 @@ int cargar_carpeta(const char carpeta[], RegistroCSV registros[]) {
     } while (_findnext(busqueda, &datos) == 0);
 
     _findclose(busqueda);
+
+#else
+    // Versión para Linux/Unix usando POSIX
+    DIR *directorio;
+    struct dirent *entrada;
+
+    directorio = opendir(carpeta);
+    if (directorio == NULL) {
+        return 0;
+    }
+
+    while ((entrada = readdir(directorio)) != NULL && total < MAX_ARCHIVOS) {
+        // Verificar si el archivo termina con .csv
+        size_t len = strlen(entrada->d_name);
+        if (len >= 4 && strcmp(entrada->d_name + len - 4, ".csv") == 0) {
+            copiar_texto(registros[total].nombre_fichero, entrada->d_name, MAX_TEXTO);
+            registros[total].total_metadatos = 0;
+            total++;
+        }
+    }
+
+    closedir(directorio);
+#endif
 
     return total;
 }
@@ -282,4 +306,66 @@ int buscar_campo(const RegistroCSV *registro, const char campo[]) {
     }
 
     return -1;
+}
+//------------------------------------------------------------------------------
+/*
+    Lee los valores de cada metadato y los almacena en la estructura.
+    Utiliza la función buscar_campo para encontrar el índice correspondiente.
+*/
+void leer_valores(const char carpeta[], RegistroCSV registros[], int total) {
+    int i;
+
+    for (i = 0; i < total; i++) {
+        char ruta[MAX_RUTA];
+        char linea[MAX_LINEA];
+        FILE *archivo;
+        int j = 0;
+
+        unir_ruta(ruta, carpeta, registros[i].nombre_fichero);
+        archivo = fopen(ruta, "r");
+
+        if (archivo == NULL) {
+            continue;
+        }
+
+        while (fgets(linea, sizeof(linea), archivo) != NULL) {
+            char campo[MAX_TEXTO];
+            char valor[MAX_TEXTO];
+            int indice;
+
+            quitar_salto_linea(linea);
+
+            if (linea_vacia(linea)) {
+                break;
+            }
+
+            if (separar_metadata(linea, campo, valor)) {
+                indice = buscar_campo(&registros[i], campo);
+                if (indice != -1) {
+                    copiar_texto(registros[i].valores[indice], valor, MAX_TEXTO);
+                }
+                j++;
+            }
+        }
+
+        fclose(archivo);
+    }
+}
+//------------------------------------------------------------------------------
+/*
+    Imprime todos los metadatos almacenados en la estructura.
+*/
+void imprimir_metadatos(const RegistroCSV registros[], int total) {
+    int i, j;
+
+    for (i = 0; i < total; i++) {
+        printf("\n===== %s =====", registros[i].nombre_fichero);
+        printf("\n");
+
+        for (j = 0; j < registros[i].total_metadatos; j++) {
+            printf("%s: %s\n", registros[i].campos[j], registros[i].valores[j]);
+        }
+    }
+
+    printf("\n");
 }

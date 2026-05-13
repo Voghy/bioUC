@@ -56,7 +56,7 @@ int buscar_campo(const RegistroCSV *registro, const char campo[]);
 
 int main(int argc, char *argv[]) {
     static RegistroCSV registros[MAX_ARCHIVOS];
-    const char *carpeta = "./data/raw/gait";
+    const char *carpeta = "D:/bioUC/bioUC/data/raw/gait";
     int total;
 
     if (argc > 1) {
@@ -355,17 +355,34 @@ void leer_valores(const char carpeta[], RegistroCSV registros[], int total) {
 /*
     Imprime todos los metadatos almacenados en la estructura.
 */
+//------------------------------------------------------------------------------
+/*
+    Imprime todos los metadatos almacenados en la estructura de forma organizada.
+    Muestra el nombre del archivo, el total de campos encontrados y cada par campo:valor.
+*/
 void imprimir_metadatos(const RegistroCSV registros[], int total) {
     int i, j;
 
-    for (i = 0; i < total; i++) {
-        printf("\n===== %s =====", registros[i].nombre_fichero);
-        printf("\n");
+    printf("\n========================================================");
+    printf("\n   RESUMEN DE METADATOS - %d ARCHIVOS ENCONTRADOS", total);
+    printf("\n========================================================\n");
 
-        for (j = 0; j < registros[i].total_metadatos; j++) {
-            printf("%s: %s\n", registros[i].campos[j], registros[i].valores[j]);
-        }
+    if (total == 0) {
+        printf("No se encontraron registros para mostrar.\n");
+        return;
     }
 
-    printf("\n");
+    for (i = 0; i < total; i++) {
+        printf("\nARCHIVO [%d]: %s", i + 1, registros[i].nombre_fichero);
+        printf("\nTotal de metadatos: %d", registros[i].total_metadatos);
+        printf("\n--------------------------------------------------------\n");
+
+        for (j = 0; j < registros[i].total_metadatos; j++) {
+            // Se puede usar limpiar_espacios aquí si se desea un resultado más pulido
+            printf("  %-25s : %s\n", registros[i].campos[j], registros[i].valores[j]);
+        }
+        printf("--------------------------------------------------------\n");
+    }
+
+    printf("\nFin del reporte.\n");
 }

@@ -256,116 +256,110 @@ int cargar_datos(
 
 void corregir_aceleracion(Datos registros[], int total) {
     /*
-        Tarea del estudiante:
-        1. recorrer todas las muestras,
-        2. multiplicar por -1 el valor linear_acceleration_z.
-
-        Esta version no modifica nada.
+        Recorrer todas las muestras y multiplicar por -1 el valor
+        linear_acceleration_z para corregir la orientacion del eje.
     */
-    (void)registros;
-    (void)total;
+    for (int i = 0; i < total; i++) {
+        registros[i].linear_acceleration_z *= -1.0;
+    }
 }
 
 double calcular_longitud_temporal(int total, double fs) {
     /*
-        Tarea del estudiante:
-        1. verificar que fs sea mayor que cero,
-        2. calcular el tiempo total como:
-              tiempo = total / fs
-        3. devolver el resultado en segundos.
-
-        Mientras no este implementada, devuelve 0.0.
+        Calcula el tiempo total de la grabacion en segundos.
+        tiempo = total_muestras / frecuencia_muestreo
     */
-    (void)total;
-    (void)fs;
-    return 0.0;
+    if (fs <= 0.0) {
+        return 0.0;
+    }
+    return (double)total / fs;
 }
 
 int buscar_indice_primera_sync(const Datos registros[], int total) {
     /*
-        Tarea del estudiante:
-        1. recorrer el arreglo desde el inicio,
-        2. encontrar la primera muestra donde sync != 0,
-        3. devolver ese indice,
-        4. si no hay ninguna, devolver -1.
+        Busca el indice de la primera muestra donde sync es diferente de 0.
+        Esto marca el inicio del movimiento sincronizado.
     */
-    (void)registros;
-    (void)total;
+    for (int i = 0; i < total; i++) {
+        if (registros[i].sync != 0) {
+            return i;
+        }
+    }
     return -1;
 }
 
 int buscar_indice_ultima_sync(const Datos registros[], int total) {
     /*
-        Tarea del estudiante:
-        1. recorrer el arreglo desde el final,
-        2. encontrar la ultima muestra donde sync != 0,
-        3. devolver ese indice,
-        4. si no hay ninguna, devolver -1.
+        Busca el indice de la ultima muestra donde sync es diferente de 0.
+        Esto marca el final del movimiento sincronizado.
     */
-    (void)registros;
-    (void)total;
+    for (int i = total - 1; i >= 0; i--) {
+        if (registros[i].sync != 0) {
+            return i;
+        }
+    }
     return -1;
 }
 
 int contar_transiciones_S3_S0(const Datos registros[], int inicio, int fin) {
     /*
-        Tarea del estudiante:
-        1. verificar que inicio y fin definan una ventana valida,
-        2. recorrer segmentation_output entre inicio y fin,
-        3. contar cuantas veces aparece la transicion 3 -> 0,
-        4. devolver la cantidad de pasos detectados.
+        Cuenta la cantidad de transiciones de fase 3 a fase 0 en el
+        segmentation_output. Cada transicion representa un paso completo.
     */
-    (void)registros;
-    (void)inicio;
-    (void)fin;
-    return 0;
+    if (inicio < 0 || fin < 0 || inicio >= fin) {
+        return 0;
+    }
+
+    int pasos = 0;
+    for (int i = inicio; i < fin; i++) {
+        if (registros[i].segmentation_output == 3 &&
+            registros[i + 1].segmentation_output == 0) {
+            pasos++;
+        }
+    }
+    return pasos;
 }
 
 double calcular_velocidad_marcha(int muestras_sync, double fs) {
     /*
-        Tarea del estudiante:
-        1. calcular el tiempo de la ventana Sync:
-              tiempo = muestras_sync / fs
-        2. usar la distancia util de 6 metros,
-        3. devolver distancia / tiempo.
-
-        Mientras no este implementada, devuelve 0.0.
+        Calcula la velocidad de marcha usando la ventana de SYNC.
+        velocidad = distancia_util / tiempo_sync
+        donde distancia_util = 6.0 metros para el protocolo 10MWT
+        y tiempo_sync = muestras_sync / frecuencia_muestreo
     */
-    (void)muestras_sync;
-    (void)fs;
-    return 0.0;
+    if (fs <= 0.0 || muestras_sync <= 0) {
+        return 0.0;
+    }
+
+    double tiempo_sync = (double)muestras_sync / fs;
+    return DISTANCIA_UTIL_10MWT_M / tiempo_sync;
 }
 
 double calcular_velocidad_pasos(int pasos, int muestras_pasos, double fs) {
     /*
-        Tarea del estudiante:
-        1. verificar que pasos, muestras_pasos y fs sean validos,
-        2. calcular el tiempo de la ventana:
-              tiempo = muestras_pasos / fs
-        3. dividir la cantidad de pasos por ese tiempo,
-        4. devolver el resultado en pasos/s.
-
-        Mientras no este implementada, devuelve 0.0.
+        Calcula la velocidad de pasos (cadencia de marcha).
+        velocidad_pasos = cantidad_pasos / tiempo_pasos
+        donde tiempo_pasos = muestras_pasos / frecuencia_muestreo
     */
-    (void)pasos;
-    (void)muestras_pasos;
-    (void)fs;
-    return 0.0;
+    if (fs <= 0.0 || muestras_pasos <= 0 || pasos <= 0) {
+        return 0.0;
+    }
+
+    double tiempo_pasos = (double)muestras_pasos / fs;
+    return (double)pasos / tiempo_pasos;
 }
 
 double calcular_longitud_zancada(double velocidad_marcha, double velocidad_pasos) {
     /*
-        Tarea del estudiante:
-        1. verificar que velocidad_pasos sea mayor que cero,
-        2. calcular:
-              longitud = velocidad_marcha / velocidad_pasos
-        3. devolver el resultado en metros por paso.
-
-        Mientras no este implementada, devuelve 0.0.
+        Calcula la longitud promedio de zancada en metros.
+        longitud = velocidad_marcha / velocidad_pasos
+        (velocidad_marcha en m/s, velocidad_pasos en pasos/s)
     */
-    (void)velocidad_marcha;
-    (void)velocidad_pasos;
-    return 0.0;
+    if (velocidad_pasos <= 0.0) {
+        return 0.0;
+    }
+
+    return velocidad_marcha / velocidad_pasos;
 }
 
 void imprimir_resultados(

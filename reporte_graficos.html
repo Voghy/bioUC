@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis Biomecánico - Tarea 1</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .stat-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .stat-box h3 {
+            color: #667eea;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        .graficos {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        .grafico-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .grafico-titulo {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        canvas {
+            max-height: 400px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        thead {
+            background: #667eea;
+            color: white;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+        tbody tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        tbody tr:hover {
+            background: #e9ecef;
+        }
+        .tabla-titulo {
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            padding: 20px;
+            background: #667eea;
+            margin-bottom: 0;
+            border-radius: 10px 10px 0 0;
+        }
+        .datos-tabla {
+            margin-top: 30px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Análisis de Datos Biomecánicos de Marcha - Tarea 1</h1>
+            <p>Dataset: BioMecanicaUC | Protocolo: 10 Meter Walking Test (10MWT)</p>
+            <div class="stats">
+                <div class="stat-box">
+                    <h3>Total de Registros</h3>
+                    <div class="stat-value">30</div>
+                </div>
+                <div class="stat-box">
+                    <h3>Edad Promedio</h3>
+                    <div class="stat-value">28.4 años</div>
+                </div>
+                <div class="stat-box">
+                    <h3>Velocidad Promedio</h3>
+                    <div class="stat-value">1.02 m/s</div>
+                </div>
+                <div class="stat-box">
+                    <h3>Peso Promedio</h3>
+                    <div class="stat-value">75.4 kg</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="graficos">
+            <div class="grafico-container">
+                <div class="grafico-titulo">Edad vs Velocidad de Marcha</div>
+                <canvas id="chart1"></canvas>
+            </div>
+            <div class="grafico-container">
+                <div class="grafico-titulo">Altura vs Peso</div>
+                <canvas id="chart2"></canvas>
+            </div>
+            <div class="grafico-container">
+                <div class="grafico-titulo">Distribución de Edades</div>
+                <canvas id="chart3"></canvas>
+            </div>
+            <div class="grafico-container">
+                <div class="grafico-titulo">Distribución de Velocidades</div>
+                <canvas id="chart4"></canvas>
+            </div>
+        </div>
+
+        <div class="datos-tabla">
+            <div class="tabla-titulo">📋 Datos Detallados</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Archivo</th>
+                        <th>Sujeto</th>
+                        <th>Edad</th>
+                        <th>Altura (cm)</th>
+                        <th>Peso (kg)</th>
+                        <th>Velocidad (m/s)</th>
+                        <th>Muestras</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>S04_gait_10MWT_02.csv</td>
+                        <td>S04</td>
+                        <td>26</td>
+                        <td>165.0</td>
+                        <td>58.0</td>
+                        <td>1.022</td>
+                        <td>1066</td>
+                    </tr>
+                    <tr>
+                        <td>S07_gait_10MWT_02.csv</td>
+                        <td>S07</td>
+                        <td>28</td>
+                        <td>186.0</td>
+                        <td>78.0</td>
+                        <td>0.850</td>
+                        <td>804</td>
+                    </tr>
+                    <tr>
+                        <td>S02_gait_10MWT_02.csv</td>
+                        <td>S02</td>
+                        <td>24</td>
+                        <td>170.0</td>
+                        <td>76.0</td>
+                        <td>1.225</td>
+                        <td>596</td>
+                    </tr>
+                    <tr>
+                        <td>S10_gait_10MWT_03.csv</td>
+                        <td>S10</td>
+                        <td>28</td>
+                        <td>146.0</td>
+                        <td>44.0</td>
+                        <td>1.202</td>
+                        <td>556</td>
+                    </tr>
+                    <tr>
+                        <td>S10_gait_10MWT_02.csv</td>
+                        <td>S10</td>
+                        <td>28</td>
+                        <td>146.0</td>
+                        <td>44.0</td>
+                        <td>0.933</td>
+                        <td>710</td>
+                    </tr>
+                    <tr>
+                        <td>S08_gait_10MWT_02.csv</td>
+                        <td>S08</td>
+                        <td>25</td>
+                        <td>175.0</td>
+                        <td>78.0</td>
+                        <td>1.198</td>
+                        <td>595</td>
+                    </tr>
+                    <tr>
+                        <td>S03_gait_10MWT_01.csv</td>
+                        <td>S03</td>
+                        <td>23</td>
+                        <td>165.0</td>
+                        <td>100.0</td>
+                        <td>1.293</td>
+                        <td>409</td>
+                    </tr>
+                    <tr>
+                        <td>S01_gait_10MWT_02.csv</td>
+                        <td>S01</td>
+                        <td>38</td>
+                        <td>176.0</td>
+                        <td>87.0</td>
+                        <td>0.974</td>
+                        <td>779</td>
+                    </tr>
+                    <tr>
+                        <td>S09_gait_10MWT_03.csv</td>
+                        <td>S09</td>
+                        <td>36</td>
+                        <td>173.0</td>
+                        <td>70.0</td>
+                        <td>0.839</td>
+                        <td>888</td>
+                    </tr>
+                    <tr>
+                        <td>S05_gait_10MWT_03.csv</td>
+                        <td>S05</td>
+                        <td>26</td>
+                        <td>173.0</td>
+                        <td>73.0</td>
+                        <td>0.989</td>
+                        <td>599</td>
+                    </tr>
+                    <tr>
+                        <td>S02_gait_10MWT_01.csv</td>
+                        <td>S02</td>
+                        <td>24</td>
+                        <td>170.0</td>
+                        <td>76.0</td>
+                        <td>1.225</td>
+                        <td>596</td>
+                    </tr>
+                    <tr>
+                        <td>S10_gait_10MWT_01.csv</td>
+                        <td>S10</td>
+                        <td>28</td>
+                        <td>146.0</td>
+                        <td>44.0</td>
+                        <td>0.573</td>
+                        <td>1091</td>
+                    </tr>
+                    <tr>
+                        <td>S03_gait_10MWT_02.csv</td>
+                        <td>S03</td>
+                        <td>23</td>
+                        <td>165.0</td>
+                        <td>100.0</td>
+                        <td>1.263</td>
+                        <td>458</td>
+                    </tr>
+                    <tr>
+                        <td>S01_gait_10MWT_01.csv</td>
+                        <td>S01</td>
+                        <td>38</td>
+                        <td>176.0</td>
+                        <td>87.0</td>
+                        <td>0.845</td>
+                        <td>1441</td>
+                    </tr>
+                    <tr>
+                        <td>S05_gait_10MWT_02.csv</td>
+                        <td>S05</td>
+                        <td>26</td>
+                        <td>173.0</td>
+                        <td>73.0</td>
+                        <td>1.016</td>
+                        <td>581</td>
+                    </tr>
+                    <tr>
+                        <td>S04_gait_10MWT_01.csv</td>
+                        <td>S04</td>
+                        <td>26</td>
+                        <td>165.0</td>
+                        <td>58.0</td>
+                        <td>1.016</td>
+                        <td>1010</td>
+                    </tr>
+                    <tr>
+                        <td>S06_gait_10MWT_02.csv</td>
+                        <td>S06</td>
+                        <td>30</td>
+                        <td>175.0</td>
+                        <td>90.0</td>
+                        <td>0.837</td>
+                        <td>789</td>
+                    </tr>
+                    <tr>
+                        <td>S06_gait_10MWT_03.csv</td>
+                        <td>S06</td>
+                        <td>30</td>
+                        <td>175.0</td>
+                        <td>90.0</td>
+                        <td>0.810</td>
+                        <td>838</td>
+                    </tr>
+                    <tr>
+                        <td>S07_gait_10MWT_01.csv</td>
+                        <td>S07</td>
+                        <td>28</td>
+                        <td>186.0</td>
+                        <td>78.0</td>
+                        <td>1.160</td>
+                        <td>795</td>
+                    </tr>
+                    <tr>
+                        <td>S04_gait_10MWT_03.csv</td>
+                        <td>S04</td>
+                        <td>26</td>
+                        <td>165.0</td>
+                        <td>58.0</td>
+                        <td>1.036</td>
+                        <td>724</td>
+                    </tr>
+                    <tr>
+                        <td>S08_gait_10MWT_03.csv</td>
+                        <td>S08</td>
+                        <td>25</td>
+                        <td>175.0</td>
+                        <td>78.0</td>
+                        <td>1.206</td>
+                        <td>605</td>
+                    </tr>
+                    <tr>
+                        <td>S06_gait_10MWT_01.csv</td>
+                        <td>S06</td>
+                        <td>30</td>
+                        <td>175.0</td>
+                        <td>90.0</td>
+                        <td>0.847</td>
+                        <td>837</td>
+                    </tr>
+                    <tr>
+                        <td>S09_gait_10MWT_02.csv</td>
+                        <td>S09</td>
+                        <td>36</td>
+                        <td>173.0</td>
+                        <td>70.0</td>
+                        <td>0.839</td>
+                        <td>888</td>
+                    </tr>
+                    <tr>
+                        <td>S09_gait_10MWT_01.csv</td>
+                        <td>S09</td>
+                        <td>36</td>
+                        <td>173.0</td>
+                        <td>70.0</td>
+                        <td>0.815</td>
+                        <td>828</td>
+                    </tr>
+                    <tr>
+                        <td>S02_gait_10MWT_03.csv</td>
+                        <td>S02</td>
+                        <td>24</td>
+                        <td>170.0</td>
+                        <td>76.0</td>
+                        <td>1.289</td>
+                        <td>578</td>
+                    </tr>
+                    <tr>
+                        <td>S03_gait_10MWT_03.csv</td>
+                        <td>S03</td>
+                        <td>23</td>
+                        <td>165.0</td>
+                        <td>100.0</td>
+                        <td>1.258</td>
+                        <td>466</td>
+                    </tr>
+                    <tr>
+                        <td>S05_gait_10MWT_01.csv</td>
+                        <td>S05</td>
+                        <td>26</td>
+                        <td>173.0</td>
+                        <td>73.0</td>
+                        <td>1.068</td>
+                        <td>578</td>
+                    </tr>
+                    <tr>
+                        <td>S07_gait_10MWT_03.csv</td>
+                        <td>S07</td>
+                        <td>28</td>
+                        <td>186.0</td>
+                        <td>78.0</td>
+                        <td>0.886</td>
+                        <td>777</td>
+                    </tr>
+                    <tr>
+                        <td>S01_gait_10MWT_03.csv</td>
+                        <td>S01</td>
+                        <td>38</td>
+                        <td>176.0</td>
+                        <td>87.0</td>
+                        <td>0.847</td>
+                        <td>763</td>
+                    </tr>
+                    <tr>
+                        <td>S08_gait_10MWT_01.csv</td>
+                        <td>S08</td>
+                        <td>25</td>
+                        <td>175.0</td>
+                        <td>78.0</td>
+                        <td>1.154</td>
+                        <td>635</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <footer>
+            <p>Generado automáticamente por graficos_html.c | Tarea 1 - Ingeniería de Software II</p>
+        </footer>
+    </div>
+
+    <script>
+        const datos = [
+            { edad: 26, altura: 165.0, peso: 58.0, velocidad: 1.022 },
+            { edad: 28, altura: 186.0, peso: 78.0, velocidad: 0.850 },
+            { edad: 24, altura: 170.0, peso: 76.0, velocidad: 1.225 },
+            { edad: 28, altura: 146.0, peso: 44.0, velocidad: 1.202 },
+            { edad: 28, altura: 146.0, peso: 44.0, velocidad: 0.933 },
+            { edad: 25, altura: 175.0, peso: 78.0, velocidad: 1.198 },
+            { edad: 23, altura: 165.0, peso: 100.0, velocidad: 1.293 },
+            { edad: 38, altura: 176.0, peso: 87.0, velocidad: 0.974 },
+            { edad: 36, altura: 173.0, peso: 70.0, velocidad: 0.839 },
+            { edad: 26, altura: 173.0, peso: 73.0, velocidad: 0.989 },
+            { edad: 24, altura: 170.0, peso: 76.0, velocidad: 1.225 },
+            { edad: 28, altura: 146.0, peso: 44.0, velocidad: 0.573 },
+            { edad: 23, altura: 165.0, peso: 100.0, velocidad: 1.263 },
+            { edad: 38, altura: 176.0, peso: 87.0, velocidad: 0.845 },
+            { edad: 26, altura: 173.0, peso: 73.0, velocidad: 1.016 },
+            { edad: 26, altura: 165.0, peso: 58.0, velocidad: 1.016 },
+            { edad: 30, altura: 175.0, peso: 90.0, velocidad: 0.837 },
+            { edad: 30, altura: 175.0, peso: 90.0, velocidad: 0.810 },
+            { edad: 28, altura: 186.0, peso: 78.0, velocidad: 1.160 },
+            { edad: 26, altura: 165.0, peso: 58.0, velocidad: 1.036 },
+            { edad: 25, altura: 175.0, peso: 78.0, velocidad: 1.206 },
+            { edad: 30, altura: 175.0, peso: 90.0, velocidad: 0.847 },
+            { edad: 36, altura: 173.0, peso: 70.0, velocidad: 0.839 },
+            { edad: 36, altura: 173.0, peso: 70.0, velocidad: 0.815 },
+            { edad: 24, altura: 170.0, peso: 76.0, velocidad: 1.289 },
+            { edad: 23, altura: 165.0, peso: 100.0, velocidad: 1.258 },
+            { edad: 26, altura: 173.0, peso: 73.0, velocidad: 1.068 },
+            { edad: 28, altura: 186.0, peso: 78.0, velocidad: 0.886 },
+            { edad: 38, altura: 176.0, peso: 87.0, velocidad: 0.847 },
+            { edad: 25, altura: 175.0, peso: 78.0, velocidad: 1.154 },
+        ];
+
+        const ctx1 = document.getElementById('chart1').getContext('2d');
+        new Chart(ctx1, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Edad vs Velocidad',
+                    data: datos.map(d => ({x: d.edad, y: d.velocidad})),
+                    backgroundColor: 'rgba(102, 126, 234, 0.7)',
+                    borderColor: 'rgba(102, 126, 234, 1)',
+                    borderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { title: { display: true, text: 'Edad (años)' } },
+                    y: { title: { display: true, text: 'Velocidad (m/s)' } }
+                }
+            }
+        });
+
+        const ctx2 = document.getElementById('chart2').getContext('2d');
+        new Chart(ctx2, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Altura vs Peso',
+                    data: datos.map(d => ({x: d.altura, y: d.peso})),
+                    backgroundColor: 'rgba(118, 75, 162, 0.7)',
+                    borderColor: 'rgba(118, 75, 162, 1)',
+                    borderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { title: { display: true, text: 'Altura (cm)' } },
+                    y: { title: { display: true, text: 'Peso (kg)' } }
+                }
+            }
+        });
+
+        const edadRanges = ['20-22', '22-24', '24-26', '26-28', '28-30', '30-32', '32-34', '34-36', '36-38', '38-40'];
+        const edadCounts = [0,0,0,0,0,0,0,0,0,0];
+        datos.forEach(d => {
+            let bin = Math.floor((d.edad - 20) / 2);
+            if (bin >= 0 && bin < 10) edadCounts[bin]++;
+        });
+        const ctx3 = document.getElementById('chart3').getContext('2d');
+        new Chart(ctx3, {
+            type: 'bar',
+            data: {
+                labels: edadRanges,
+                datasets: [{
+                    label: 'Frecuencia',
+                    data: edadCounts,
+                    backgroundColor: 'rgba(102, 126, 234, 0.7)',
+                    borderColor: 'rgba(102, 126, 234, 1)',
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                }
+            }
+        });
+
+        const velRanges = ['0.5-0.6', '0.6-0.7', '0.7-0.8', '0.8-0.9', '0.9-1.0', '1.0-1.1', '1.1-1.2', '1.2-1.3', '1.3-1.4', '1.4-1.5'];
+        const velCounts = [0,0,0,0,0,0,0,0,0,0];
+        datos.forEach(d => {
+            let bin = Math.floor((d.velocidad - 0.5) * 10);
+            if (bin >= 0 && bin < 10) velCounts[bin]++;
+        });
+        const ctx4 = document.getElementById('chart4').getContext('2d');
+        new Chart(ctx4, {
+            type: 'bar',
+            data: {
+                labels: velRanges,
+                datasets: [{
+                    label: 'Frecuencia',
+                    data: velCounts,
+                    backgroundColor: 'rgba(118, 75, 162, 0.7)',
+                    borderColor: 'rgba(118, 75, 162, 1)',
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

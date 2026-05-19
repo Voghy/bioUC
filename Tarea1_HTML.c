@@ -3,12 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-
-#ifdef _WIN32
 #include <io.h>
-#else
-#include <dirent.h>
-#endif
 
 /*
     tarea1.c
@@ -74,6 +69,7 @@ void quitar_salto_linea(char texto[]);
 int linea_vacia(const char texto[]);
 int separar_metadata(const char linea_original[], char campo[], char valor[]);
 int buscar_campo(const RegistroCSV *registro, const char campo[]);
+void limpiar_espacios(char texto[]);
 
 int main(int argc, char *argv[]) {
     static RegistroCSV registros[MAX_ARCHIVOS];
@@ -94,7 +90,6 @@ int main(int argc, char *argv[]) {
 
     imprimir_metadatos(registros, total);   // Imprime en la terminal
 
-    //
     generar_reporte_html(registros, total);
     return 0;
 }
@@ -106,8 +101,6 @@ int main(int argc, char *argv[]) {
 */
 int cargar_carpeta(const char carpeta[], RegistroCSV registros[]) {
     int total = 0;
-
-#ifdef _WIN32
     char patron[MAX_RUTA];
     struct _finddata_t datos;
     intptr_t busqueda;
@@ -128,32 +121,9 @@ int cargar_carpeta(const char carpeta[], RegistroCSV registros[]) {
     } while (_findnext(busqueda, &datos) == 0);
 
     _findclose(busqueda);
-
-#else
-    // Versión para Linux/Unix usando POSIX
-    DIR *directorio;
-    struct dirent *entrada;
-
-    directorio = opendir(carpeta);
-    if (directorio == NULL) {
-        return 0;
-    }
-
-    while ((entrada = readdir(directorio)) != NULL && total < MAX_ARCHIVOS) {
-        // Verificar si el archivo termina con .csv
-        size_t len = strlen(entrada->d_name);
-        if (len >= 4 && strcmp(entrada->d_name + len - 4, ".csv") == 0) {
-            copiar_texto(registros[total].nombre_fichero, entrada->d_name, MAX_TEXTO);
-            registros[total].total_metadatos = 0;
-            total++;
-        }
-    }
-
-    closedir(directorio);
-#endif
-
     return total;
 }
+
 //------------------------------------------------------------------------------
 void unir_ruta(char destino[], const char carpeta[], const char fichero[]) {
     size_t n = strlen(carpeta);
@@ -164,6 +134,7 @@ void unir_ruta(char destino[], const char carpeta[], const char fichero[]) {
         snprintf(destino, MAX_RUTA, "%s/%s", carpeta, fichero);
     }
 }
+
 //------------------------------------------------------------------------------
 void copiar_texto(char destino[], const char origen[], size_t tamano) {
     if (tamano == 0) {
@@ -221,6 +192,7 @@ void quitar_salto_linea(char texto[]) {
         n--;
     }
 }
+
 //------------------------------------------------------------------------------
 int linea_vacia(const char texto[]) {
     int i = 0;
@@ -234,6 +206,7 @@ int linea_vacia(const char texto[]) {
 
     return 1;
 }
+
 //------------------------------------------------------------------------------
 /*
     Lee solo los nombres de los campos de metadatos.
@@ -275,6 +248,7 @@ void leer_campos(const char carpeta[], RegistroCSV registros[], int total) {
         fclose(archivo);
     }
 }
+
 //------------------------------------------------------------------------------
 /*
     Divide una linea de metadatos en campo y valor usando la primera coma.
@@ -295,12 +269,9 @@ int separar_metadata(const char linea_original[], char campo[], char valor[]) {
     copiar_texto(campo, linea, MAX_TEXTO);
     copiar_texto(valor, coma + 1, MAX_TEXTO);
 
-    // limpiar_espacios(campo);
-    // limpiar_espacios(valor);
-    // quitar_comillas(valor);
-
     return 1;
 }
+
 //------------------------------------------------------------------------------
 void limpiar_espacios(char texto[]) {
     char *inicio = texto;
@@ -333,6 +304,7 @@ int buscar_campo(const RegistroCSV *registro, const char campo[]) {
 
     return -1;
 }
+
 //------------------------------------------------------------------------------
 /*
     Lee los valores de cada metadato y los almacena en la estructura.
@@ -345,7 +317,6 @@ void leer_valores(const char carpeta[], RegistroCSV registros[], int total) {
         char ruta[MAX_RUTA];
         char linea[MAX_LINEA];
         FILE *archivo;
-        int j = 0;
 
         unir_ruta(ruta, carpeta, registros[i].nombre_fichero);
         archivo = fopen(ruta, "r");
@@ -370,17 +341,13 @@ void leer_valores(const char carpeta[], RegistroCSV registros[], int total) {
                 if (indice != -1) {
                     copiar_texto(registros[i].valores[indice], valor, MAX_TEXTO);
                 }
-                j++;
             }
         }
 
         fclose(archivo);
     }
 }
-//------------------------------------------------------------------------------
-/*
-    Imprime todos los metadatos almacenados en la estructura.
-*/
+
 //------------------------------------------------------------------------------
 /*
     Imprime todos los metadatos almacenados en la estructura de forma organizada.
@@ -404,7 +371,6 @@ void imprimir_metadatos(const RegistroCSV registros[], int total) {
         printf("\n--------------------------------------------------------\n");
 
         for (j = 0; j < registros[i].total_metadatos; j++) {
-            // Se puede usar limpiar_espacios aquí si se desea un resultado más pulido
             printf("  %-25s : %s\n", registros[i].campos[j], registros[i].valores[j]);
         }
         printf("--------------------------------------------------------\n");
@@ -553,7 +519,7 @@ void generar_reporte_html(const RegistroCSV registros[], int total) {
 
     fprintf(archivo, "    <h1>Dashboard de Marcha Humana (10MWT)</h1>\n");
 
-    // Recorrer cada sujeto/archivo cargado
+    // Recorrer cada sujeto/archivo cargado para armar el HTML visual
     for (i = 0; i < total; i++) {
         fprintf(archivo, "    <div class='contenedor-sujeto'>\n");
         fprintf(archivo, "        <h2>Fichero: %s</h2>\n", registros[i].nombre_fichero);
@@ -578,8 +544,10 @@ void generar_reporte_html(const RegistroCSV registros[], int total) {
         
         fprintf(archivo, "        </div>\n"); // Cierre grid-contenido
         fprintf(archivo, "    </div>\n\n");  // Cierre contenedor-sujeto
+    }
 
-        // 3. Inyección de Código JavaScript para inicializar el gráfico de este sujeto
+    // Recorrer cada sujeto para inyectar su script correspondiente
+    for (i = 0; i < total; i++) {
         fprintf(archivo, "    <script>\n");
         fprintf(archivo, "        (function() {\n");
         

@@ -1,26 +1,7 @@
 #include <ctype.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-
-#ifdef _WIN32
-#include <io.h>
-#else
-#include <dirent.h>
-#endif
-
-/*
-    tarea1.c
-
-    Lee los archivos CSV de data/raw/gait y extrae los metadatos iniciales.
-
-    La organizacion queda separada en pasos:
-    1. cargar_carpeta: carga solamente los nombres de los ficheros en nuestra "macro" estructura.
-    2. contar_metadatos: cuenta cuantos metadatos tiene cada fichero.
-    3. leer_campos: lee los nombres de los campos de metadatos y los carga en la "macro" estructura.
-    4. leer_valores: lee los valores correspondientes a esos campos y los carga en la "macro" estructura.
-    5. imprimir_metadatos: muestra el resultado recorriendo la "macro" estructura..
-*/
+#include <io.h> 
 
 #define MAX_ARCHIVOS 100
 #define MAX_METADATOS 40
@@ -28,7 +9,7 @@
 #define MAX_LINEA 1024
 #define MAX_RUTA 512
 
-// "macro" estructura
+// "macro" estructura 
 typedef struct {
     char nombre_fichero[MAX_TEXTO];
     int total_metadatos;
@@ -36,23 +17,18 @@ typedef struct {
     char valores[MAX_METADATOS][MAX_TEXTO];
 } RegistroCSV;
 
-//funcion que busca todos los ficheros disponibles y carga sus nombres en la estructura de datos
+// Prototipos simplificados
 int cargar_carpeta(const char carpeta[], RegistroCSV registros[]);
-//funcion que cuenta cuantas lineas de metadatos tiene el fichero
 void contar_metadatos(const char carpeta[], RegistroCSV registros[], int total);
-//funcion que lee los datos
-void leer_campos(const char carpeta[], RegistroCSV registros[], int total);
-//funciones  a implementar
-void leer_valores(const char carpeta[], RegistroCSV registros[], int total);
+void leer_metadatos(const char carpeta[], RegistroCSV registros[], int total); // Fusionada y eficiente
 void imprimir_metadatos(const RegistroCSV registros[], int total);
 
-// Funciones de soporte
+// Funciones de soporte esenciales
 void unir_ruta(char destino[], const char carpeta[], const char fichero[]);
 void copiar_texto(char destino[], const char origen[], size_t tamano);
 void quitar_salto_linea(char texto[]);
 int linea_vacia(const char texto[]);
 int separar_metadata(const char linea_original[], char campo[], char valor[]);
-int buscar_campo(const RegistroCSV *registro, const char campo[]);
 
 int main(int argc, char *argv[]) {
     static RegistroCSV registros[MAX_ARCHIVOS];
@@ -66,22 +42,16 @@ int main(int argc, char *argv[]) {
     total = cargar_carpeta(carpeta, registros);
 
     contar_metadatos(carpeta, registros, total);
-    leer_campos(carpeta, registros, total);
-    leer_valores(carpeta, registros, total);
+    leer_metadatos(carpeta, registros, total); 
     imprimir_metadatos(registros, total);
 
     return 0;
 }
 
 //------------------------------------------------------------------------------
-/*
-    Recorre la carpeta y carga solamente el nombre de cada fichero CSV
-    dentro del arreglo registros.
-*/
+/* Recorre la carpeta en Windows y carga los nombres de ficheros .csv */
 int cargar_carpeta(const char carpeta[], RegistroCSV registros[]) {
     int total = 0;
-
-#ifdef _WIN32
     char patron[MAX_RUTA];
     struct _finddata_t datos;
     intptr_t busqueda;
@@ -102,59 +72,13 @@ int cargar_carpeta(const char carpeta[], RegistroCSV registros[]) {
     } while (_findnext(busqueda, &datos) == 0);
 
     _findclose(busqueda);
-
-#else
-    // Versión para Linux/Unix usando POSIX
-    DIR *directorio;
-    struct dirent *entrada;
-
-    directorio = opendir(carpeta);
-    if (directorio == NULL) {
-        return 0;
-    }
-
-    while ((entrada = readdir(directorio)) != NULL && total < MAX_ARCHIVOS) {
-        // Verificar si el archivo termina con .csv
-        size_t len = strlen(entrada->d_name);
-        if (len >= 4 && strcmp(entrada->d_name + len - 4, ".csv") == 0) {
-            copiar_texto(registros[total].nombre_fichero, entrada->d_name, MAX_TEXTO);
-            registros[total].total_metadatos = 0;
-            total++;
-        }
-    }
-
-    closedir(directorio);
-#endif
-
     return total;
 }
-//------------------------------------------------------------------------------
-void unir_ruta(char destino[], const char carpeta[], const char fichero[]) {
-    size_t n = strlen(carpeta);
-
-    if (n > 0 && (carpeta[n - 1] == '/' || carpeta[n - 1] == '\\')) {
-        snprintf(destino, MAX_RUTA, "%s%s", carpeta, fichero);
-    } else {
-        snprintf(destino, MAX_RUTA, "%s/%s", carpeta, fichero);
-    }
-}
-//------------------------------------------------------------------------------
-void copiar_texto(char destino[], const char origen[], size_t tamano) {
-    if (tamano == 0) {
-        return;
-    }
-    strncpy(destino, origen, tamano - 1);
-    destino[tamano - 1] = '\0';
-}
 
 //------------------------------------------------------------------------------
-/*
-    Cuenta cuantas lineas de metadatos tiene cada fichero.
-    La cuenta termina cuando aparece la primera linea vacia.
-*/
+/* Cuenta cuántas líneas de metadatos tiene cada fichero hasta la línea vacía */
 void contar_metadatos(const char carpeta[], RegistroCSV registros[], int total) {
     int i;
-
     for (i = 0; i < total; i++) {
         char ruta[MAX_RUTA];
         char linea[MAX_LINEA];
@@ -164,58 +88,29 @@ void contar_metadatos(const char carpeta[], RegistroCSV registros[], int total) 
         unir_ruta(ruta, carpeta, registros[i].nombre_fichero);
         archivo = fopen(ruta, "r");
 
-        if (archivo == NULL) {  //si no se pudo abrir el fichero
+        if (archivo == NULL) {
             registros[i].total_metadatos = 0;
             continue;
         }
 
         while (fgets(linea, sizeof(linea), archivo) != NULL) {
             quitar_salto_linea(linea);
-
-            if (linea_vacia(linea)) { // si la liena esta bvacia, se detiene la busqueda.
+            if (linea_vacia(linea)) {
                 break;
             }
-
-            if (strchr(linea, ',') != NULL && contador < MAX_METADATOS) { //si la linea tiene coma y es menor que numero de metadatos (es linea de metadato)
+            if (strchr(linea, ',') != NULL && contador < MAX_METADATOS) {
                 contador++;
             }
         }
-
         fclose(archivo);
         registros[i].total_metadatos = contador;
     }
 }
 
 //------------------------------------------------------------------------------
-void quitar_salto_linea(char texto[]) {
-    size_t n = strlen(texto);
-
-    while (n > 0 && (texto[n - 1] == '\n' || texto[n - 1] == '\r')) {
-        texto[n - 1] = '\0';
-        n--;
-    }
-}
-//------------------------------------------------------------------------------
-int linea_vacia(const char texto[]) {
-    int i = 0;
-
-    while (texto[i] != '\0') {
-        if (!isspace((unsigned char)texto[i])) {
-            return 0;
-        }
-        i++;
-    }
-
-    return 1;
-}
-//------------------------------------------------------------------------------
-/*
-    Lee solo los nombres de los campos de metadatos.
-    Ejemplo: de "Age,38" guarda solamente "Age".
-*/
-void leer_campos(const char carpeta[], RegistroCSV registros[], int total) {
+/* Lee campos y valores al mismo tiempo en una sola pasada por archivo */
+void leer_metadatos(const char carpeta[], RegistroCSV registros[], int total) {
     int i;
-
     for (i = 0; i < total; i++) {
         char ruta[MAX_RUTA];
         char linea[MAX_LINEA];
@@ -241,19 +136,16 @@ void leer_campos(const char carpeta[], RegistroCSV registros[], int total) {
 
             if (separar_metadata(linea, campo, valor)) {
                 copiar_texto(registros[i].campos[j], campo, MAX_TEXTO);
-                registros[i].valores[j][0] = '\0';
+                copiar_texto(registros[i].valores[j], valor, MAX_TEXTO);
                 j++;
             }
         }
-
         fclose(archivo);
     }
 }
+
 //------------------------------------------------------------------------------
-/*
-    Divide una linea de metadatos en campo y valor usando la primera coma.
-    Esto permite que el valor contenga mas comas.
-*/
+/* Divide una línea de metadatos en campo y valor usando la primera coma */
 int separar_metadata(const char linea_original[], char campo[], char valor[]) {
     char linea[MAX_LINEA];
     char *coma;
@@ -268,101 +160,48 @@ int separar_metadata(const char linea_original[], char campo[], char valor[]) {
     *coma = '\0';
     copiar_texto(campo, linea, MAX_TEXTO);
     copiar_texto(valor, coma + 1, MAX_TEXTO);
-
-    // limpiar_espacios(campo);
-    // limpiar_espacios(valor);
-    // quitar_comillas(valor);
-
     return 1;
 }
+
 //------------------------------------------------------------------------------
-void limpiar_espacios(char texto[]) {
-    char *inicio = texto;
-    char *fin;
-    size_t largo;
-
-    while (*inicio != '\0' && isspace((unsigned char)*inicio)) {
-        inicio++;
+void unir_ruta(char destino[], const char carpeta[], const char fichero[]) {
+    size_t n = strlen(carpeta);
+    if (n > 0 && (carpeta[n - 1] == '/' || carpeta[n - 1] == '\\')) {
+        snprintf(destino, MAX_RUTA, "%s%s", carpeta, fichero);
+    } else {
+        snprintf(destino, MAX_RUTA, "%s/%s", carpeta, fichero);
     }
+}
 
-    fin = inicio + strlen(inicio);
-    while (fin > inicio && isspace((unsigned char)*(fin - 1))) {
-        fin--;
-    }
-
-    largo = (size_t)(fin - inicio);
-    memmove(texto, inicio, largo);
-    texto[largo] = '\0';
+//------------------------------------------------------------------------------
+void copiar_texto(char destino[], const char origen[], size_t tamano) {
+    if (tamano == 0) return;
+    strncpy(destino, origen, tamano - 1);
+    destino[tamano - 1] = '\0';
 }
 
 //------------------------------------------------------------------------------
-int buscar_campo(const RegistroCSV *registro, const char campo[]) {
-    int i;
-
-    for (i = 0; i < registro->total_metadatos; i++) {
-        if (strcmp(registro->campos[i], campo) == 0) {
-            return i;
-        }
-    }
-
-    return -1;
-}
-//------------------------------------------------------------------------------
-/*
-    Lee los valores de cada metadato y los almacena en la estructura.
-    Utiliza la función buscar_campo para encontrar el índice correspondiente.
-*/
-void leer_valores(const char carpeta[], RegistroCSV registros[], int total) {
-    int i;
-
-    for (i = 0; i < total; i++) {
-        char ruta[MAX_RUTA];
-        char linea[MAX_LINEA];
-        FILE *archivo;
-        int j = 0;
-
-        unir_ruta(ruta, carpeta, registros[i].nombre_fichero);
-        archivo = fopen(ruta, "r");
-
-        if (archivo == NULL) {
-            continue;
-        }
-
-        while (fgets(linea, sizeof(linea), archivo) != NULL) {
-            char campo[MAX_TEXTO];
-            char valor[MAX_TEXTO];
-            int indice;
-
-            quitar_salto_linea(linea);
-
-            if (linea_vacia(linea)) {
-                break;
-            }
-
-            if (separar_metadata(linea, campo, valor)) {
-                indice = buscar_campo(&registros[i], campo);
-                if (indice != -1) {
-                    copiar_texto(registros[i].valores[indice], valor, MAX_TEXTO);
-                }
-                j++;
-            }
-        }
-
-        fclose(archivo);
+void quitar_salto_linea(char texto[]) {
+    size_t n = strlen(texto);
+    while (n > 0 && (texto[n - 1] == '\n' || texto[n - 1] == '\r')) {
+        texto[n - 1] = '\0';
+        n--;
     }
 }
+
 //------------------------------------------------------------------------------
-/*
-    Imprime todos los metadatos almacenados en la estructura.
-*/
+int linea_vacia(const char texto[]) {
+    int i = 0;
+    while (texto[i] != '\0') {
+        if (!isspace((unsigned char)texto[i])) return 0;
+        i++;
+    }
+    return 1;
+}
+
 //------------------------------------------------------------------------------
-/*
-    Imprime todos los metadatos almacenados en la estructura de forma organizada.
-    Muestra el nombre del archivo, el total de campos encontrados y cada par campo:valor.
-*/
 void imprimir_metadatos(const RegistroCSV registros[], int total) {
     int i, j;
-
     printf("\n========================================================");
     printf("\n   RESUMEN DE METADATOS - %d ARCHIVOS ENCONTRADOS", total);
     printf("\n========================================================\n");
@@ -378,11 +217,9 @@ void imprimir_metadatos(const RegistroCSV registros[], int total) {
         printf("\n--------------------------------------------------------\n");
 
         for (j = 0; j < registros[i].total_metadatos; j++) {
-            // Se puede usar limpiar_espacios aquí si se desea un resultado más pulido
             printf("  %-25s : %s\n", registros[i].campos[j], registros[i].valores[j]);
         }
         printf("--------------------------------------------------------\n");
     }
-
     printf("\nFin del reporte.\n");
 }

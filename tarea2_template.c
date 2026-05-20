@@ -276,8 +276,11 @@ double calcular_longitud_temporal(int total, double fs) {
 
         Mientras no este implementada, devuelve 0.0.
     */
-    (void)total;
-    (void)fs;
+    if (fs <= 0.0) {
+        printf("Frecuencia de muestreo invalida: %.3f Hz\n", fs);
+        return 0.0;
+    }
+   double seg = (double)total / fs;
     return 0.0;
 }
 
@@ -323,9 +326,17 @@ int contar_transiciones_S3_S0(const Datos registros[], int inicio, int fin) {
         3. contar cuantas veces aparece la transicion 3 -> 0,
         4. devolver la cantidad de pasos detectados.
     */
-    (void)registros;
-    (void)inicio;
-    (void)fin;
+ if (inicio < 0 || fin <= inicio) {
+        printf("Ventana Sync invalida: inicio=%d, fin=%d\n", inicio, fin);
+        return 0;
+    }
+        int pasos = 0;
+    for (int i = inicio + 1; i < fin; i++) {
+        if (registros[i - 1].segmentation_output == 3 &&
+            registros[i].segmentation_output == 0) {
+            pasos++;
+        }
+    }
     return 0;
 }
 

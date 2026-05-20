@@ -36,7 +36,7 @@ typedef struct {
     double linear_acceleration_z;
     int segmentation_output;
     int sync;
-} Datos;
+} Datos; //Se utiliza para función de buscar_indice_primera_sync (AP)
 
 /* Prototipos */
 int cargar_metadata(const char archivo[], double *frecuencia_muestreo);
@@ -289,6 +289,14 @@ int buscar_indice_primera_sync(const Datos registros[], int total) {
         3. devolver ese indice,
         4. si no hay ninguna, devolver -1.
     */
+
+    /* Busca la primera muestra donde Sync es distinto de cero. AP*/
+    for (int i = 0; i < total; i++) {
+        if (registros[i].sync != 0) {
+            return i;
+        }
+    }
+        
     (void)registros;
     (void)total;
     return -1;
@@ -363,9 +371,16 @@ double calcular_longitud_zancada(double velocidad_marcha, double velocidad_pasos
 
         Mientras no este implementada, devuelve 0.0.
     */
+
+    /* Calcula longitud media por paso: L = v_marcha / v_pasos. AP*/
+    if (velocidad_marcha <= 0.0 || velocidad_pasos <= 0.0) {
+        return 0.0;
+    }
+    return velocidad_marcha / velocidad_pasos;
+    
     (void)velocidad_marcha;
     (void)velocidad_pasos;
-    return 0.0;
+    //return 0.0;
 }
 
 void imprimir_resultados(

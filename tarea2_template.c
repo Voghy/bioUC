@@ -25,6 +25,8 @@
     5. detectar la ventana Sync,
     6. contar pasos con transiciones S3 -> S0,
     7. calcular metricas del registro.
+
+    Solo se calcula para una persona.
 */
 
 #define MAX_LINEA 1024

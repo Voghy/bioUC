@@ -270,7 +270,7 @@ void corregir_aceleracion(Datos registros[], int total) {
 
 double calcular_longitud_temporal(int total, double fs) {
     /*
-        Tarea del estudiante:
+        Tarea del estudiante: Ezequiel Zelaya
         1. verificar que fs sea mayor que cero,
         2. calcular el tiempo total como:
               tiempo = total / fs
@@ -278,6 +278,10 @@ double calcular_longitud_temporal(int total, double fs) {
 
         Mientras no este implementada, devuelve 0.0.
     */
+    /*
+    Ezequiel Zelaya
+    */
+    
     if (fs <= 0.0) {
         printf("Frecuencia de muestreo invalida: %.3f Hz\n", fs);
         return 0.0;
@@ -322,7 +326,7 @@ int buscar_indice_ultima_sync(const Datos registros[], int total) {
 
 int contar_transiciones_S3_S0(const Datos registros[], int inicio, int fin) {
     /*
-        Tarea del estudiante:
+        Tarea del estudiante: Ezequiel Zelaya
         1. verificar que inicio y fin definan una ventana valida,
         2. recorrer segmentation_output entre inicio y fin,
         3. contar cuantas veces aparece la transicion 3 -> 0,
